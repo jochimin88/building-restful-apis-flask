@@ -1,15 +1,26 @@
+# Import libraries
+
+
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Float
 import os
+from flask_marshmallow import Marshmallow 
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token
 
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' +\
     os.path.join(basedir, 'planets.db')
+app.config['JWT_SECRET_KEY'] = 'supersecret' # need change this
+
+# Instancies
+
 
 db = SQLAlchemy(app)
+ma = Marshmallow(app)
+jwt = JWTManager(app)
 
 
 @app.cli.command('db_create')
@@ -103,6 +114,55 @@ def url_variables(name: str, age: int):
     else:
         return jsonify(message='Hello ' + name + ', you are old enough')
 
+# route to get all the planets
+
+
+@app.route('/planets', methods=['GET'])
+def planets():
+    planets_list = Planet.query.all()
+    results = planet_schema.dump(planets_list)
+    return jsonify(results)
+
+
+# route to register
+
+
+@app.route('/register', methods=['POST'])
+def register():
+    email = request.form['email']
+    test = User.query.filter_by(email=email).first()
+    if test:
+        return jsonify(message='This email already exists!')
+    else:
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        password = request.form['password']
+        #email = request.form['email']
+        user = User(first_name=first_name, last_name=last_name, email=email, password=password)
+        db.session.add(user)
+        db.session.commit()
+        return jsonify(message="User created successfully"), 201
+
+# route to make login
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    if request.is_json:
+        email = request.json['email']
+        password = request.json['password']
+    else:
+        email = request.form['email']
+        password = request.form['password']
+    
+    test = User.query.filter_by(email=email, password=password).first()
+    if test:
+        access_token = create_access_token(identity=email)
+        return jsonify(message='Login succeeded!', access_token=access_token)
+    else:
+        return jsonify(message='Bad email or password'), 401
+
+
 # database models
 
 
@@ -124,6 +184,22 @@ class Planet(db.Model):
     mass = Column(Float)
     radius = Column(Float)
     distance = Column(Float)
+
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'first_name', 'last_name', 'email', 'password')
+
+
+class PlanetSchema(ma.Schema):
+    class Meta:
+        fields = ('planet_id', 'planet_name', 'planet_type', 'home_star', 'mass', 'radius', 'distance')
+
+
+user_schema = UserSchema()
+user_schema = UserSchema(many=True)
+
+planet_schema = PlanetSchema()
+planet_schema = PlanetSchema(many=True)
 
 
 if __name__ == "__main__":
