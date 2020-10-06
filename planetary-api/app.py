@@ -80,6 +80,9 @@ def db_seed():
     print("Database seeded!")
 
 
+# example routes
+
+
 @app.route('/')
 def hello():
     return 'Hello World'
@@ -96,6 +99,8 @@ def not_found():
 
 
 # route with parameters http://localhost:5000/parameters?name=Jose&age=32
+
+
 @app.route('/parameters')
 def parameters():
     name = request.args.get('name')
@@ -107,6 +112,8 @@ def parameters():
 
 
 # route with variables http://localhost:5000/url_variables/jochi/31
+
+
 @app.route('/url_variables/<string:name>/<int:age>')
 def url_variables(name: str, age: int):
     if age < 18:
