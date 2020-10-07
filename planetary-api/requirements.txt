@@ -1,0 +1,4 @@
+flask
+flask-marshmallow
+Flask-JWT-Extended
+Flask-Mail
