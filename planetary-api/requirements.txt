@@ -1,4 +1,5 @@
 flask
+flask_sqlalchemy
 flask-marshmallow
 Flask-JWT-Extended
 Flask-Mail

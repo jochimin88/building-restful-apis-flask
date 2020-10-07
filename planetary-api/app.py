@@ -193,7 +193,22 @@ def forgot_password(email: str):
         mail.send(msg)
         return jsonify(message="Password sent to " + email)
     else:
-        return jsonify(message="That email not exist!")
+        return jsonify(message="That email not exist!"), 401
+
+# Get the planets by Id, 
+
+
+@app.route('/planet_details/<int:planet_id>', methods=["GET"])
+def planet_details(planet_id: int):
+    """ Return the name of the planet if exist
+    Example: http://127.0.0.1:5000/planet_details/3 
+    """
+    planet = Planet.query.filter_by(planet_id=planet_id).first()
+    if planet:
+        result = planet_schema.dump(planet)
+        return jsonify(planet=result)
+    else:
+        return jsonify(message="That planet does not exist"), 404
 
 
 # database models
@@ -211,9 +226,9 @@ class User(db.Model):
 class Planet(db.Model):
     __tablename__ = 'planets'
     planet_id = Column(Integer, primary_key=True)
-    planet_name = Column(String(length=50))
-    planet_type = Column(String(length=50))
-    home_star = Column(String(length=50))
+    planet_name = Column(String)
+    planet_type = Column(String)
+    home_star = Column(String)
     mass = Column(Float)
     radius = Column(Float)
     distance = Column(Float)
@@ -229,10 +244,10 @@ class PlanetSchema(ma.Schema):
 
 
 user_schema = UserSchema()
-user_schema = UserSchema(many=True)
+users_schema = UserSchema(many=True)
 
 planet_schema = PlanetSchema()
-planet_schema = PlanetSchema(many=True)
+planets_schema = PlanetSchema(many=True)
 
 
 if __name__ == "__main__":
